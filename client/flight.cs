@@ -42,13 +42,15 @@ namespace StandAloneMapView.client
 
         public override void Awake()
         {
-            MapView.OnExitMapView += () => ForceMapView();
+            //MapView.OnExitMapView += () => ForceMapView();
+
             this.Invoke("ForceMapView", 0.25f); // Call it directly in Start() and it doesn't work.
             this.socketWorker.Start();
         }
 
         public override void OnDestroy()
         {
+
             if(this.socketWorker != null)
             {
                 this.socketWorker.Stop();
@@ -107,10 +109,23 @@ namespace StandAloneMapView.client
                 LogException(e);
                 throw;
             }
-        }
+        }   
 
         public void UpdateVessel(Vessel vessel, comms.Vessel vesselUpdate)
         {
+            //Porky coded
+            vessel.ActionGroups.SetGroup(KSPActionGroup.SAS,vesselUpdate.SAS);
+            vessel.ActionGroups.SetGroup(KSPActionGroup.RCS,vesselUpdate.RCS);
+            vessel.ActionGroups.SetGroup(KSPActionGroup.Light,vesselUpdate.Light);
+            vessel.ActionGroups.SetGroup(KSPActionGroup.Brakes,vesselUpdate.Brakes);
+            vessel.ActionGroups.SetGroup(KSPActionGroup.Gear,vesselUpdate.Gear);
+            vessel.ActionGroups.SetGroup(KSPActionGroup.Abort,vesselUpdate.Abort);
+            FlightInputHandler.state.mainThrottle = vesselUpdate.Throttle;
+            FlightInputHandler.state.pitch = vesselUpdate.pitch;
+            FlightInputHandler.state.yaw = vesselUpdate.yaw;
+            FlightInputHandler.state.roll = vesselUpdate.roll;
+
+
             // We can't release launch clamps, so delete them
             if(vessel.situation == Vessel.Situations.PRELAUNCH)
                 DestroyLaunchClamps(vessel);
@@ -154,6 +169,9 @@ namespace StandAloneMapView.client
             }
         }
 
+
+ 
+
         public void UpdateTarget()
         {
             var update = this.socketWorker.TargetUpdate;
@@ -182,9 +200,7 @@ namespace StandAloneMapView.client
         public void ForceMapView()
         {
             MapView.EnterMapView();
-            var blocks = ControlTypes.MAP | ControlTypes.ACTIONS_SHIP | ControlTypes.ALL_SHIP_CONTROLS |
-                    ControlTypes.GROUPS_ALL | ControlTypes.LINEAR | ControlTypes.QUICKLOAD | ControlTypes.QUICKSAVE |
-                        ControlTypes.TIMEWARP | ControlTypes.VESSEL_SWITCHING;
+            var blocks =  ControlTypes.QUICKLOAD | ControlTypes.QUICKSAVE;
             InputLockManager.SetControlLock(blocks, "stand-alone-map-view");
         }
 
